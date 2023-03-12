@@ -346,16 +346,17 @@
           const transaction = await contract.mintToken(amount, { value: value });
           const receipt = await transaction.wait();
 		  
-		  const txId = receipt.transactionHash
+          const txId = receipt.transactionHash
           const url = `https://goerli.etherscan.io/tx/${txId}`
+	  console.log(url);
 		  
 		  // Display the transaction ID as a link below the NFT selector
-		  txLink.href = url
-		  txLink.target = '_blank'
-		  txLink.innerText = `Transaction ID: ${txId}`
+		  // txLink.href = url
+		  // txLink.target = '_blank'
+		  // txLink.innerText = `Transaction ID: ${txId}`
 		  
-		  const txContainer = document.getElementById('txContainer')
-		  txContainer.appendChild(txLink)
+		  // const txContainer = document.getElementById('txContainer')
+		  // txContainer.appendChild(txLink)
 
 		  
 		  mintButton.classList.remove('loading')
@@ -363,7 +364,7 @@
 		  mintButton.disabled = False;
 		  
 		  loginButton.classList.remove("disabled");
-          loginButton.disabled = false;
+                  loginButton.disabled = false;
           console.log(receipt);
         } catch (error) {
 		  mintButton.classList.remove('loading')
@@ -371,7 +372,7 @@
 		  mintButton.disabled = False;
 		  
 		  loginButton.classList.remove("disabled");
-          loginButton.disabled = false;
+                  loginButton.disabled = false;
 		  
           console.error(error);
         }

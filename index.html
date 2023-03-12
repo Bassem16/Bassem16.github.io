@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="text/javascript"></script>
+  <title>Web3 Metamask Login</title>
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-image: url('https://bafybeiaezbcrza5i6kphjufwyhbr3advrewhybokvgi5a7ncy35ado4one.ipfs.nftstorage.link/logo/logo_full.png');
+      background-size: cover;
+      background-position: center;
+	  background-repeat: no-repeat;
+	  overflow: hidden;
+      height: 100vh;
+	  
+    }
+    .button-container {
+      margin-top: 20px;
+      margin-right: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+	
+	   button {
+      background-color: #6B46C1;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #7C3AED;
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0px);
+    }
+	
+	#connectionStatus {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-dot {
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    .status-connected {
+      background-color: green;
+    }
+
+    .status-not-connected {
+      background-color: red;
+    }
+	
+	.loading {
+  position: relative;
+}
+	
+	.loading::after {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  border-radius: 50%;
+  border: 0.2em solid currentColor;
+  border-right-color: transparent;
+  animation: spin 1s ease-in-out infinite;
+}
+.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+#txContainer {
+  display: none;
+}
+
+#txContainer.visible {
+  display: block;
+}
+	
+  </style>
+</head>
+
+<body>
+
+<div id="connectionStatus">
+    <div class="status-dot"></div>
+    <p id="connectionText" class="text-white text-lg"></p>
+  </div>
+ 
+  
+  
+  <div class="button-container">
+    <button id='loginButton' onclick="" class="rounded-md p-2 bg-purple-500 text-white">
+      Login with MetaMask
+    </button>
+  </div>
+
+  <div class="flex w-screen h-screen justify-center items-center">
+  
+    <div class="flex-col space-y-2 justify-center items-center">
+      <!--p id='userWallet' class='text-lg text-gray-600 my-2'></p-->
+	  <button id='mintButton' onclick="mint()" class="rounded-md p-2 bg-purple-500 text-white">
+      Mint Your NFT
+    </button>
+	<br></br>
+	<p id='userWallet'></p>
+	
+	<div class="relative">
+    <select id="numNFTs" name="numNFTs" class="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+      <option>1</option>
+      <option>2</option>
+      <option>3</option>
+      <option>4</option>
+      <option>5</option>
+    </select>
+    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+      <svg class="fill-current h-4 w-4" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5H7z"/></svg>
+    </div>
+	
+	    
+  </div>
+    </div>
+   
+
+  
+</div>
+  
+ <footer class="bg-gray-800 py-6">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-center">
+        <div class="flex items-center mb-4">
+          <img src="https://goerli.etherscan.io/assets/svg/logos/logo-etherscan.svg?v=0.0.5" alt="Logo" class="mr-2 text-white">
+          <div id="txContainer" class="text-gray-600 text-sm"></div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+
+  <script>
+    window.userWalletAddress = null
+    const loginButton = document.getElementById('loginButton')
+    <!--const userWallet = document.getElementById('userWallet')-->
+	const connectionDot = document.querySelector('.status-dot')
+    const connectionText = document.getElementById('connectionText')
+	const numNFTSelector = document.getElementById("numNFTs")
+	const mintButton = document.getElementById('mintButton')
+	const txContainer = document.getElementById('txContainer')
+	
+	connectionText.innerText = 'Not connected'
+	connectionDot.classList.add('status-not-connected')
+	txContainer.classList.add("visible");
+	
+	mintButton.classList.add("disabled");
+	mintButton.disabled = true;
+	
+	numNFTSelector.classList.add("disabled");
+	numNFTSelector.disabled = true;
+	
+	
+	
+    function toggleButton() {
+      if (!window.ethereum) {
+        loginButton.innerText = 'MetaMask is not installed'
+        loginButton.classList.remove('bg-purple-500', 'text-white')
+        loginButton.classList.add('bg-gray-500', 'text-gray-100', 'cursor-not-allowed')
+		
+		
+        connectionText.innerText = 'Not connected'
+        return false
+      }
+
+      loginButton.addEventListener('click', loginWithMetaMask)
+    }
+
+    async function loginWithMetaMask() {
+	  loginButton.classList.add("disabled");
+      loginButton.disabled = true;
+	  loginButton.classList.add('loading')
+	
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+        .catch((e) => {
+          console.error(e.message)
+          return
+        })
+      if (!accounts) { return }
+
+      window.userWalletAddress = accounts[0]
+      <!--userWallet.innerText = window.userWalletAddress-->
+      loginButton.innerText = 'Sign out of MetaMask'
+	  
+      loginButton.removeEventListener('click', loginWithMetaMask)
+      setTimeout(() => {
+        loginButton.addEventListener('click', signOutOfMetaMask)
+      }, 200)
+	 
+	 loginButton.classList.remove('loading')
+	 connectionDot.classList.remove('status-not-connected')
+	 connectionDot.classList.add('status-connected')
+	 connectionText.innerText = `Connected with address ${window.userWalletAddress}`
+	 
+	 loginButton.classList.remove("disabled");
+     loginButton.disabled = false;
+	 
+	 mintButton.classList.remove("disabled");
+	 mintButton.disabled = false;
+	 numNFTSelector.classList.remove("disabled");
+	 numNFTSelector.disabled = false;
+	 
+	 
+	 const url = `https://goerli.etherscan.io/address/0xce16cac9aee306fcc175458ba5a09dd8e8a023ef`
+		  
+		  // Display the transaction ID as a link below the NFT selector
+		  const txLink = document.createElement('a')
+		  txLink.href = url
+		  txLink.target = '_blank'
+		  txLink.innerText = `Transaction ID:`
+		  
+		  
+		  txContainer.appendChild(txLink)
+    }
+
+    function signOutOfMetaMask() {
+	  loginButton.classList.add("disabled");
+      loginButton.disabled = true;
+	  loginButton.classList.add('loading')
+      window.userWalletAddress = null
+      <!--userWallet.innerText = ''->
+      loginButton.innerText = 'Sign in with MetaMask'
+
+      loginButton.removeEventListener('click', signOutOfMetaMask)
+      setTimeout(() => {
+        loginButton.addEventListener('click', loginWithMetaMask)
+      }, 200)
+	  loginButton.classList.remove('loading')
+	  connectionDot.classList.remove('status-connected')
+	  connectionDot.classList.add('status-not-connected')
+	  connectionText.innerText = 'Not connected'
+	  
+	  loginButton.classList.remove("disabled");
+      loginButton.disabled = false;
+	  
+	 mintButton.classList.add("disabled");
+	 mintButton.disabled = true;
+	 numNFTSelector.classList.add("disabled");
+	 numNFTSelector.disabled = true;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      toggleButton()
+    });
+  </script>
+  
+
+    <script>
+      const contractAddress = '0xf6A8E4f6983d1ac816723591d7730aFb9b880085';
+      const abi = [
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "symbol",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "_hiddenMetadataUri",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "_contractUri",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "_mint_price",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "mintToken",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        }
+      ];
+
+      async function mint() {
+        try {
+		  mintButton.classList.add("disabled");
+		  mintButton.disabled = true;
+		  mintButton.classList.add('loading')
+		  
+		  loginButton.classList.add("disabled");
+		  loginButton.disabled = true;
+		  
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+          const signer = web3Provider.getSigner(accounts[0]);
+          const contract = new ethers.Contract(contractAddress, abi, signer);
+          const amount = numNFTSelector.value;
+          const mintPrice = 0;
+		  console.log(amount);
+          const value = mintPrice * amount;
+          const transaction = await contract.mintToken(amount, { value: value });
+          const receipt = await transaction.wait();
+		  
+		  const txId = receipt.transactionHash
+          const url = `https://goerli.etherscan.io/tx/${txId}`
+		  
+		  // Display the transaction ID as a link below the NFT selector
+		  txLink.href = url
+		  txLink.target = '_blank'
+		  txLink.innerText = `Transaction ID: ${txId}`
+		  
+		  const txContainer = document.getElementById('txContainer')
+		  txContainer.appendChild(txLink)
+
+		  
+		  mintButton.classList.remove('loading')
+		  mintButton.classList.remove("disabled");
+		  mintButton.disabled = False;
+		  
+		  loginButton.classList.remove("disabled");
+          loginButton.disabled = false;
+          console.log(receipt);
+        } catch (error) {
+		  mintButton.classList.remove('loading')
+		  mintButton.classList.remove("disabled");
+		  mintButton.disabled = False;
+		  
+		  loginButton.classList.remove("disabled");
+          loginButton.disabled = false;
+		  
+          console.error(error);
+        }
+      }
+    </script>
+	
+</body>
+
+</html>

@@ -106,10 +106,16 @@
 </head>
 
 <body>
+// Paste the code inside the <body> tag
 <script src="https://unpkg.com/magic-snowflakes/dist/snowflakes.min.js"></script>
-    <script>
-        new Snowflakes();
-    </script>
+<script>
+    var sf = new Snowflakes({
+        color: "#ffffff",
+        count: 300,
+        maxOpacity: 0.9,
+        maxSize: 20
+    });
+</script>
 <div id="connectionStatus">
     <div class="status-dot"></div>
     <p id="connectionText" class="text-white text-lg"></p>

@@ -3,7 +3,8 @@
 
 <head>
 	<script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="text/javascript"></script>
-  <title>Web3 Metamask Login</title>
+	<script src="https://unpkg.com/snowjs/dist/snow.min.js"></script>
+  <title>Web3 ChamonixNFT Login</title>
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
@@ -106,7 +107,7 @@
 </head>
 
 <body>
-
+<div id="snow-container"></div>
 <div id="connectionStatus">
     <div class="status-dot"></div>
     <p id="connectionText" class="text-white text-lg"></p>
@@ -163,6 +164,11 @@
   
 
   <script>
+	   Snow.init({
+        container: document.getElementById('snow-container'),
+        // Autres options facultatives ici
+    });
+	  
     window.userWalletAddress = null
     const loginButton = document.getElementById('loginButton')
     <!--const userWallet = document.getElementById('userWallet')-->
